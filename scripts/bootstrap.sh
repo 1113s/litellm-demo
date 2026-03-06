@@ -37,6 +37,9 @@ fi
 if ! grep -q '^LITELLM_MASTER_KEY=' "${ENV_FILE}"; then
   fail "LITELLM_MASTER_KEY is missing in .env"
 fi
+if ! grep -q '^LITELLM_BASE_URL=' "${ENV_FILE}"; then
+  fail "LITELLM_BASE_URL is missing in .env"
+fi
 
 log "Starting containers..."
 docker compose -f "${ROOT_DIR}/docker-compose.yml" up -d --build

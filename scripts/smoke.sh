@@ -22,16 +22,18 @@ command -v curl >/dev/null 2>&1 || fail "curl command not found."
 source "${ENV_FILE}"
 
 : "${LITELLM_MASTER_KEY:?LITELLM_MASTER_KEY not set in .env}"
+TEST_API_KEY="${TEST_API_KEY:-$LITELLM_MASTER_KEY}"
 
 curl_json() {
   local method="$1"
   local url="$2"
   local data="${3:-}"
   local tmp_file
+  local status
   tmp_file="$(mktemp)"
 
   if [[ -n "${data}" ]]; then
-    status="$(curl -sS --max-time "${TIMEOUT_SECONDS}" -o "${tmp_file}" -w '%{http_code}' -X "${method}" "${url}" -H 'Content-Type: application/json' -H "Authorization: Bearer ${LITELLM_MASTER_KEY}" -d "${data}")" || fail "curl failed for ${url}" 
+    status="$(curl -sS --max-time "${TIMEOUT_SECONDS}" -o "${tmp_file}" -w '%{http_code}' -X "${method}" "${url}" -H 'Content-Type: application/json' -H "Authorization: Bearer ${TEST_API_KEY}" -d "${data}")" || fail "curl failed for ${url}" 
   else
     status="$(curl -sS --max-time "${TIMEOUT_SECONDS}" -o "${tmp_file}" -w '%{http_code}' -X "${method}" "${url}")" || fail "curl failed for ${url}" 
   fi
@@ -53,7 +55,7 @@ curl_json GET "${BASE_URL}/api/healthz" >/dev/null
 log "2/3 Check LiteLLM readiness via nginx: ${BASE_URL}/health/readiness"
 curl_json GET "${BASE_URL}/health/readiness" >/dev/null
 
-log "3/3 Check OpenAI-compatible chat endpoint with test key"
+log "3/3 Check OpenAI-compatible chat endpoint with test key (TEST_API_KEY or LITELLM_MASTER_KEY)"
 CHAT_PAYLOAD='{"model":"router/default-fast","messages":[{"role":"user","content":"Reply with one short word: ok"}],"max_tokens":8}'
 RESPONSE="$(curl_json POST "${BASE_URL}/v1/chat/completions" "${CHAT_PAYLOAD}")"
 

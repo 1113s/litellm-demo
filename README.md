@@ -66,12 +66,15 @@ docker compose logs --tail=200 nginx litellm control-plane
 
 # custom base URL + timeout
 BASE_URL=http://127.0.0.1 TIMEOUT_SECONDS=30 ./scripts/smoke.sh
+
+# specify dedicated test key (recommended)
+TEST_API_KEY=sk-your-virtual-key ./scripts/smoke.sh
 ```
 
 Smoke checks run in order:
 1. `/api/healthz`
 2. `/health/readiness`
-3. `POST /v1/chat/completions` with `LITELLM_MASTER_KEY`
+3. `POST /v1/chat/completions` with `TEST_API_KEY` (or fallback to `LITELLM_MASTER_KEY`)
 
 ## Required .env Variables
 
