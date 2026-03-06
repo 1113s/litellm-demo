@@ -1,14 +1,12 @@
 # LiteLLM OpenRouter-like Demo (Mono-repo Skeleton)
 
-This repository provides a **minimal runnable stack** for an OpenRouter-like demo on local machine and Ubuntu 22.04:
+This repository provides a minimal runnable stack for an OpenRouter-like demo on local machine and Ubuntu 22.04:
 
 - **Nginx** (public entrypoint on port 80)
 - **LiteLLM** (gateway on internal port 4000)
 - **FastAPI control-plane** (REST + Swagger on internal port 8000)
 - **Postgres** (persistent volume)
 - **Redis** (persistent volume)
-
-> Scope in current stage: infrastructure skeleton only. Business logic is intentionally not implemented yet.
 
 ## Architecture (Port Mapping)
 
@@ -19,62 +17,70 @@ Nginx routing:
 - `/v1/*` -> LiteLLM
 - `/chat/completions` -> LiteLLM
 - `/embeddings` -> LiteLLM
+- `/health/readiness` -> LiteLLM readiness
 - `/api/*` -> control-plane
 - `/docs` and `/openapi.json` -> control-plane Swagger/OpenAPI
 
 ## Prerequisites (Ubuntu 22.04)
 
-1. Docker Engine
-2. Docker Compose plugin (`docker compose version`)
+1. Install Docker Engine.
+2. Install Docker Compose plugin (`docker compose version`).
+3. Ensure port `80` is open in your firewall/security group.
 
-## Quick Start
-
-### 1) Prepare environment variables
-
-```bash
-cp .env.example .env
-# fill in required values (especially OPENAI_API_KEY / LITELLM_MASTER_KEY)
-```
-
-### 2) Start stack
+## Ubuntu 22.04 Deployment Steps
 
 ```bash
-docker compose up -d --build
-```
+git clone <your-repo-url> litellm-demo
+cd litellm-demo
 
-### 3) Check service status
+# idempotent bootstrap: creates .env only if missing, validates required vars, then starts containers
+./scripts/bootstrap.sh
 
-```bash
+# check running services
 docker compose ps
-```
 
-### 4) Verify endpoints
-
-```bash
-curl http://localhost/
-curl http://localhost/api/healthz
-curl http://localhost/docs
-```
-
-### 5) Optional smoke test
-
-```bash
+# run smoke checks
 ./scripts/smoke.sh
 ```
 
-## Compose Service Summary
+If smoke fails:
 
-- `nginx`: reverse proxy entrypoint with route dispatch and healthcheck.
-- `litellm`: OpenAI-compatible gateway, started with `litellm/config.yaml`.
-- `control-plane`: FastAPI app built from Dockerfile.
-- `postgres`: metadata database with init SQL and persistent volume.
-- `redis`: cache/state service with persistent volume.
+```bash
+docker compose logs --tail=200 nginx litellm control-plane
+```
+
+## Makefile Targets
+
+- `make up` - build and start stack
+- `make down` - stop stack and remove volumes
+- `make logs` - tail compose logs
+- `make test` - run pytest suite
+- `make smoke` - run smoke checks
+- `make bootstrap` - run idempotent bootstrap script
+
+## Smoke Script Usage
+
+```bash
+# default target: http://localhost
+./scripts/smoke.sh
+
+# custom base URL + timeout
+BASE_URL=http://127.0.0.1 TIMEOUT_SECONDS=30 ./scripts/smoke.sh
+```
+
+Smoke checks run in order:
+1. `/api/healthz`
+2. `/health/readiness`
+3. `POST /v1/chat/completions` with `LITELLM_MASTER_KEY`
 
 ## Required .env Variables
 
 - `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `DEEPSEEK_API_KEY`
 - `LITELLM_MASTER_KEY`
 - `LITELLM_SALT_KEY`
+- `LITELLM_BASE_URL`
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`

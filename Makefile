@@ -1,4 +1,4 @@
-.PHONY: up down logs test compose-config
+.PHONY: up down logs test smoke bootstrap compose-config
 
 up:
 	docker compose up -d --build
@@ -13,4 +13,10 @@ compose-config:
 	docker compose config
 
 test:
-	docker compose run --rm control-plane pytest -q
+	PYTHONPATH=control-plane pytest -q
+
+bootstrap:
+	./scripts/bootstrap.sh
+
+smoke:
+	./scripts/smoke.sh
