@@ -59,9 +59,9 @@ class ModelCatalogRead(BaseModel):
 class RoutePolicyCreate(BaseModel):
     policy_name: str = Field(min_length=1, max_length=128)
     target_models: list[str]
-    fallback_models: list[str] = []
+    fallback_models: list[str] = Field(default_factory=list)
     strategy: RouteStrategySchema
-    weights: dict[str, float] = {}
+    weights: dict[str, float] = Field(default_factory=dict)
 
 
 class RoutePolicyRead(BaseModel):
@@ -71,4 +71,24 @@ class RoutePolicyRead(BaseModel):
     fallback_models: list[str]
     strategy: RouteStrategySchema
     weights: dict[str, float]
+    created_at: datetime
+
+
+class ApiKeyCreate(BaseModel):
+    tenant_id: str
+    display_name: str = Field(min_length=1, max_length=255)
+    litellm_key_alias: str = Field(min_length=1, max_length=255)
+    allowed_models: list[str] = Field(default_factory=list)
+    metadata_json: dict = Field(default_factory=dict)
+
+
+class ApiKeyRead(BaseModel):
+    id: str
+    tenant_id: str
+    display_name: str
+    litellm_key_alias: str
+    litellm_generated_key: str
+    allowed_models: list[str]
+    metadata_json: dict
+    is_active: bool
     created_at: datetime

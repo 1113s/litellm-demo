@@ -4,7 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import ModelCatalog, Provider, RoutePolicy, Tenant
+from app.core.litellm_client import LiteLLMClientError, generate_virtual_key
+from app.db.models import ApiKey, ModelCatalog, Provider, RoutePolicy, Tenant
 from app.db.session import get_db_session
 from app.schemas.admin import (
     ModelCatalogCreate,
@@ -15,6 +16,8 @@ from app.schemas.admin import (
     RoutePolicyRead,
     TenantCreate,
     TenantRead,
+    ApiKeyCreate,
+    ApiKeyRead,
 )
 
 router = APIRouter()
@@ -178,3 +181,37 @@ async def delete_route_policy(policy_id: str, db: AsyncSession = Depends(get_db_
     await db.delete(item)
     await db.commit()
     return {"data": {"id": policy_id, "deleted": True}}
+
+
+@router.post("/keys")
+async def create_api_key(payload: ApiKeyCreate, db: AsyncSession = Depends(get_db_session)) -> dict:
+    tenant = await db.get(Tenant, payload.tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="tenant not found")
+
+    try:
+        generated = await generate_virtual_key(
+            key_alias=payload.litellm_key_alias,
+            allowed_models=payload.allowed_models,
+            metadata_json=payload.metadata_json,
+        )
+
+        item = ApiKey(
+            tenant_id=payload.tenant_id,
+            display_name=payload.display_name,
+            litellm_key_alias=payload.litellm_key_alias,
+            litellm_generated_key=generated["key"],
+            allowed_models=payload.allowed_models,
+            metadata_json={**payload.metadata_json, "litellm_response": generated["raw"]},
+            is_active=True,
+        )
+        db.add(item)
+        await db.commit()
+        await db.refresh(item)
+        return {"data": ApiKeyRead.model_validate(item, from_attributes=True).model_dump()}
+    except LiteLLMClientError as exc:
+        await db.rollback()
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+    except Exception:
+        await db.rollback()
+        raise
