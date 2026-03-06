@@ -1,13 +1,53 @@
 model_list:
-  - model_name: gpt-4o-mini
+  # router/default-fast deployments (prefer lower latency / lower cost)
+  - model_name: router/default-fast
     litellm_params:
       model: openai/gpt-4o-mini
       api_key: os.environ/OPENAI_API_KEY
 
+  - model_name: router/default-fast
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # router/default-balanced deployments (prefer quality / stability balance)
+  - model_name: router/default-balanced
+    litellm_params:
+      model: openai/gpt-4.1-mini
+      api_key: os.environ/OPENAI_API_KEY
+
+  - model_name: router/default-balanced
+    litellm_params:
+      model: anthropic/claude-3-5-haiku-20241022
+      api_key: os.environ/ANTHROPIC_API_KEY
+
+  - model_name: router/default-balanced
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 1
+  timeout: 45
+  fallbacks:
+    - {"router/default-fast": ["router/default-balanced"]}
+
 litellm_settings:
-  set_verbose: false
+  # Demo-friendly logs + metrics
+  set_verbose: true
+  json_logs: true
   drop_params: true
-  success_callback: []
+
+  # Metrics
+  success_callback: ["prometheus"]
+  failure_callback: ["prometheus"]
+
+  # Privacy defaults for demo: do not persist prompt/response bodies
+  turn_off_message_logging: true
+
+  # Basic safety hygiene
+  redact_user_api_key_info: true
 
 general_settings:
   master_key: os.environ/LITELLM_MASTER_KEY
