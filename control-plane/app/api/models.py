@@ -4,5 +4,5 @@ router = APIRouter()
 
 
 @router.get("/", status_code=status.HTTP_200_OK)
-def list_models() -> dict[str, list]:
+async def list_models() -> dict[str, list]:
     return {"items": []}
