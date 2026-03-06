@@ -1,56 +1,87 @@
 # LiteLLM OpenRouter-like Demo (Mono-repo Skeleton)
 
-This repository contains a minimal runnable mono-repo skeleton for an OpenRouter-like demo stack:
+This repository provides a **minimal runnable stack** for an OpenRouter-like demo on local machine and Ubuntu 22.04:
 
-- **Nginx**: public entrypoint and reverse proxy
-- **LiteLLM**: OpenAI-compatible LLM gateway
-- **FastAPI control-plane**: REST API + Swagger (`/control/docs`)
-- **Postgres**: persistent metadata
-- **Redis**: cache / rate-limit state placeholder
+- **Nginx** (public entrypoint on port 80)
+- **LiteLLM** (gateway on internal port 4000)
+- **FastAPI control-plane** (REST + Swagger on internal port 8000)
+- **Postgres** (persistent volume)
+- **Redis** (persistent volume)
 
-> Current stage: infrastructure and project skeleton only. Business logic is intentionally not implemented yet.
+> Scope in current stage: infrastructure skeleton only. Business logic is intentionally not implemented yet.
 
-## Tech Stack
+## Architecture (Port Mapping)
 
-- Python **3.11**
-- FastAPI + SQLAlchemy 2.x + Alembic
-- Docker Compose for local and Ubuntu 22.04 deployment
+- External: `80` (Nginx)
+- Internal: `litellm:4000`, `control-plane:8000`
+
+Nginx routing:
+- `/v1/*` -> LiteLLM
+- `/chat/completions` -> LiteLLM
+- `/embeddings` -> LiteLLM
+- `/api/*` -> control-plane
+- `/docs` and `/openapi.json` -> control-plane Swagger/OpenAPI
+
+## Prerequisites (Ubuntu 22.04)
+
+1. Docker Engine
+2. Docker Compose plugin (`docker compose version`)
 
 ## Quick Start
 
-### 1) Prepare env
+### 1) Prepare environment variables
 
 ```bash
 cp .env.example .env
-# edit .env and set OPENAI_API_KEY and other secrets
+# fill in required values (especially OPENAI_API_KEY / LITELLM_MASTER_KEY)
 ```
 
-### 2) Start services
+### 2) Start stack
 
 ```bash
 docker compose up -d --build
 ```
 
-### 3) Verify endpoints
+### 3) Check service status
+
+```bash
+docker compose ps
+```
+
+### 4) Verify endpoints
 
 ```bash
 curl http://localhost/
-curl http://localhost/control/healthz
-curl http://localhost/control/docs
+curl http://localhost/api/healthz
+curl http://localhost/docs
 ```
 
-### 4) Optional smoke test
+### 5) Optional smoke test
 
 ```bash
 ./scripts/smoke.sh
 ```
 
-## Exposed Paths
+## Compose Service Summary
 
-- `GET /` -> nginx gateway banner
-- `POST /v1/...` -> proxied to LiteLLM (OpenAI-compatible northbound API)
-- `GET /control/healthz` -> FastAPI health check
-- `GET /control/docs` -> Swagger UI
+- `nginx`: reverse proxy entrypoint with route dispatch and healthcheck.
+- `litellm`: OpenAI-compatible gateway, started with `litellm/config.yaml`.
+- `control-plane`: FastAPI app built from Dockerfile.
+- `postgres`: metadata database with init SQL and persistent volume.
+- `redis`: cache/state service with persistent volume.
+
+## Required .env Variables
+
+- `OPENAI_API_KEY`
+- `LITELLM_MASTER_KEY`
+- `LITELLM_SALT_KEY`
+- `POSTGRES_DB`
+- `POSTGRES_USER`
+- `POSTGRES_PASSWORD`
+- `POSTGRES_HOST`
+- `POSTGRES_PORT`
+- `REDIS_HOST`
+- `REDIS_PORT`
 
 ## Repo Layout
 
@@ -58,29 +89,12 @@ curl http://localhost/control/docs
 .
 ├─ docker-compose.yml
 ├─ .env.example
+├─ litellm/config.yaml
 ├─ deploy/
 │  ├─ nginx/
-│  ├─ litellm/
 │  └─ control-plane/
 ├─ control-plane/
-│  ├─ app/
-│  └─ alembic/
 ├─ db/init/
 ├─ scripts/
 └─ tests/
 ```
-
-## Ubuntu 22.04 Notes
-
-1. Install Docker Engine + Docker Compose plugin.
-2. Clone repo and copy `.env.example` to `.env`.
-3. Run `docker compose up -d --build`.
-4. Open firewall ports as needed (e.g., `80`).
-
-## Next Steps (not in this commit)
-
-- API key management endpoints and auth
-- model mapping CRUD
-- usage event ingestion/aggregation
-- admin auth and RBAC
-- production nginx TLS + rate limits
