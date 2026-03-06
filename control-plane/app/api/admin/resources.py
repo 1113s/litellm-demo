@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.litellm_client import LiteLLMClientError, generate_virtual_key
 from app.db.models import ApiKey, ModelCatalog, Provider, RoutePolicy, Tenant
 from app.db.session import get_db_session
+from app.services.usage import UsageSummaryFilters, UsageTableMissingError, get_usage_summary
 from app.schemas.admin import (
     ModelCatalogCreate,
     ModelCatalogRead,
@@ -215,3 +218,26 @@ async def create_api_key(payload: ApiKeyCreate, db: AsyncSession = Depends(get_d
     except Exception:
         await db.rollback()
         raise
+
+
+@router.get("/usage/summary")
+async def usage_summary(
+    tenant: str | None = Query(default=None),
+    model: str | None = Query(default=None),
+    provider: str | None = Query(default=None),
+    start_time: datetime | None = Query(default=None),
+    end_time: datetime | None = Query(default=None),
+    db: AsyncSession = Depends(get_db_session),
+) -> dict:
+    filters = UsageSummaryFilters(
+        tenant_id=tenant,
+        model=model,
+        provider=provider,
+        start_time=start_time,
+        end_time=end_time,
+    )
+    try:
+        summary = await get_usage_summary(db, filters)
+        return {"data": summary}
+    except UsageTableMissingError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
