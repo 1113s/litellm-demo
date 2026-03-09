@@ -94,10 +94,8 @@ Legacy placeholder routes like `/api/keys` and `/api/models` have been removed t
 - `POSTGRES_DB`
 - `POSTGRES_USER`
 - `POSTGRES_PASSWORD`
-- `POSTGRES_HOST`
-- `POSTGRES_PORT`
-- `REDIS_HOST`
-- `REDIS_PORT`
+- `POSTGRES_PORT` (default: `5432`)
+- `REDIS_PORT` (default: `6379`)
 
 ## Repo Layout
 
