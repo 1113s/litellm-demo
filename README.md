@@ -109,8 +109,7 @@ Legacy placeholder routes like `/api/keys` and `/api/models` have been removed t
 ├─ deploy/
 │  ├─ nginx/
 │  └─ control-plane/
-├─ control-plane/
-├─ db/init/
+├─ control-plane/       # FastAPI + Alembic (manages app schema & seed)
 ├─ scripts/
 └─ tests/
 ```
