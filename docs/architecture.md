@@ -2,17 +2,17 @@
 
 This demo uses **LiteLLM as a gateway router** over three upstream providers:
 
-- OpenAI
-- Anthropic
+- GLM (Zhipu)
 - DeepSeek
+- Qwen (DashScope)
 
 ## 1) Provider Layer
 
 Configured upstream provider credentials are all read from environment variables:
 
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
+- `ZHIPU_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `DASHSCOPE_API_KEY`
 
 No provider key is hardcoded in repo.
 
@@ -27,7 +27,7 @@ Purpose:
 - lower-cost profile for iterative interactions
 
 Deployments behind this alias:
-- `openai/gpt-4o-mini`
+- `zhipuai/glm-4-flash`
 - `deepseek/deepseek-chat`
 
 Expected behavior:
@@ -41,8 +41,8 @@ Purpose:
 - cross-provider redundancy
 
 Deployments behind this alias:
-- `openai/gpt-4.1-mini`
-- `anthropic/claude-3-5-haiku-20241022`
+- `zhipuai/glm-4-plus`
+- `dashscope/qwen-plus`
 - `deepseek/deepseek-chat`
 
 Expected behavior:

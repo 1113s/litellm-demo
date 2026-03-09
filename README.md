@@ -85,9 +85,9 @@ Legacy placeholder routes like `/api/keys` and `/api/models` have been removed t
 
 ## Required .env Variables
 
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
+- `ZHIPU_API_KEY`
 - `DEEPSEEK_API_KEY`
+- `DASHSCOPE_API_KEY`
 - `LITELLM_MASTER_KEY`
 - `LITELLM_SALT_KEY`
 - `LITELLM_BASE_URL`

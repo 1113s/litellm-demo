@@ -2,8 +2,8 @@ model_list:
   # router/default-fast deployments (prefer lower latency / lower cost)
   - model_name: router/default-fast
     litellm_params:
-      model: openai/gpt-4o-mini
-      api_key: os.environ/OPENAI_API_KEY
+      model: zhipuai/glm-4-flash
+      api_key: os.environ/ZHIPU_API_KEY
 
   - model_name: router/default-fast
     litellm_params:
@@ -13,13 +13,13 @@ model_list:
   # router/default-balanced deployments (prefer quality / stability balance)
   - model_name: router/default-balanced
     litellm_params:
-      model: openai/gpt-4.1-mini
-      api_key: os.environ/OPENAI_API_KEY
+      model: zhipuai/glm-4-plus
+      api_key: os.environ/ZHIPU_API_KEY
 
   - model_name: router/default-balanced
     litellm_params:
-      model: anthropic/claude-3-5-haiku-20241022
-      api_key: os.environ/ANTHROPIC_API_KEY
+      model: dashscope/qwen-plus
+      api_key: os.environ/DASHSCOPE_API_KEY
 
   - model_name: router/default-balanced
     litellm_params:
