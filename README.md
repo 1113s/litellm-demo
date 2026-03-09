@@ -76,6 +76,13 @@ Smoke checks run in order:
 2. `/health/readiness`
 3. `POST /v1/chat/completions` with `TEST_API_KEY` (or fallback to `LITELLM_MASTER_KEY`)
 
+
+## Control-plane API Scope
+
+All supported management APIs are under `/api/admin/*` (e.g. tenants/providers/model-catalog/route-policies/keys/usage).
+
+Legacy placeholder routes like `/api/keys` and `/api/models` have been removed to avoid ambiguity.
+
 ## Required .env Variables
 
 - `OPENAI_API_KEY`
