@@ -28,18 +28,28 @@ else
   log ".env already exists. Skipping copy."
 fi
 
-if ! grep -q '^OPENAI_API_KEY=' "${ENV_FILE}"; then
-  fail "OPENAI_API_KEY is missing in .env"
-fi
-if grep -q '^OPENAI_API_KEY=sk-your-openai-key$' "${ENV_FILE}"; then
-  fail "OPENAI_API_KEY still uses placeholder value."
-fi
-if ! grep -q '^LITELLM_MASTER_KEY=' "${ENV_FILE}"; then
-  fail "LITELLM_MASTER_KEY is missing in .env"
-fi
-if ! grep -q '^LITELLM_BASE_URL=' "${ENV_FILE}"; then
-  fail "LITELLM_BASE_URL is missing in .env"
-fi
+required_vars=(
+  ZHIPU_API_KEY
+  DEEPSEEK_API_KEY
+  DASHSCOPE_API_KEY
+  LITELLM_MASTER_KEY
+  LITELLM_SALT_KEY
+  LITELLM_BASE_URL
+  POSTGRES_DB
+  POSTGRES_USER
+  POSTGRES_PASSWORD
+)
+
+for key in "${required_vars[@]}"; do
+  if ! grep -q "^${key}=" "${ENV_FILE}"; then
+    fail "${key} is missing in .env"
+  fi
+
+  value="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 | cut -d'=' -f2-)"
+  if [[ -z "${value}" ]]; then
+    fail "${key} is empty in .env"
+  fi
+done
 
 log "Starting containers..."
 docker compose -f "${ROOT_DIR}/docker-compose.yml" up -d --build
