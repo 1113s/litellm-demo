@@ -2,7 +2,7 @@ model_list:
   # router/default-fast deployments (prefer lower latency / lower cost)
   - model_name: router/default-fast
     litellm_params:
-      model: zhipuai/glm-4-flash
+      model: zai/glm-4-flash
       api_key: os.environ/ZHIPU_API_KEY
 
   - model_name: router/default-fast
@@ -13,7 +13,7 @@ model_list:
   # router/default-balanced deployments (prefer quality / stability balance)
   - model_name: router/default-balanced
     litellm_params:
-      model: zhipuai/glm-4-plus
+      model: zai/glm-4-plus
       api_key: os.environ/ZHIPU_API_KEY
 
   - model_name: router/default-balanced
