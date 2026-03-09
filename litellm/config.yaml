@@ -1,0 +1,54 @@
+model_list:
+  # router/default-fast deployments (prefer lower latency / lower cost)
+  - model_name: router/default-fast
+    litellm_params:
+      model: zhipuai/glm-4-flash
+      api_key: os.environ/ZHIPU_API_KEY
+
+  - model_name: router/default-fast
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # router/default-balanced deployments (prefer quality / stability balance)
+  - model_name: router/default-balanced
+    litellm_params:
+      model: zhipuai/glm-4-plus
+      api_key: os.environ/ZHIPU_API_KEY
+
+  - model_name: router/default-balanced
+    litellm_params:
+      model: dashscope/qwen-plus
+      api_key: os.environ/DASHSCOPE_API_KEY
+
+  - model_name: router/default-balanced
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+router_settings:
+  routing_strategy: simple-shuffle
+  num_retries: 1
+  timeout: 45
+  fallbacks:
+    - {"router/default-fast": ["router/default-balanced"]}
+
+litellm_settings:
+  # Demo-friendly logs + metrics
+  set_verbose: true
+  json_logs: true
+  drop_params: true
+
+  # Metrics
+  success_callback: ["prometheus"]
+  failure_callback: ["prometheus"]
+
+  # Privacy defaults for demo: do not persist prompt/response bodies
+  turn_off_message_logging: true
+
+  # Basic safety hygiene
+  redact_user_api_key_info: true
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
