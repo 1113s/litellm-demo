@@ -24,7 +24,7 @@ class UsageSummaryFilters:
     end_time: datetime | None = None
 
 
-TABLE_NAME = "litellm_spend_logs"
+TABLE_NAME = "LiteLLM_SpendLogs"
 
 
 async def _table_exists(db: AsyncSession) -> bool:
@@ -56,30 +56,38 @@ async def get_usage_summary(db: AsyncSession, filters: UsageSummaryFilters) -> d
             f"LiteLLM usage table '{TABLE_NAME}' does not exist. Please enable LiteLLM spend logs first."
         )
 
+    clauses: list[str] = []
+    params: dict = {}
+    if filters.tenant_id is not None:
+        clauses.append("api_key = :tenant_id")
+        params["tenant_id"] = filters.tenant_id
+    if filters.model is not None:
+        clauses.append("model = :model")
+        params["model"] = filters.model
+    if filters.provider is not None:
+        clauses.append("custom_llm_provider = :provider")
+        params["provider"] = filters.provider
+    if filters.start_time is not None:
+        clauses.append('"startTime" >= :start_time')
+        params["start_time"] = filters.start_time
+    if filters.end_time is not None:
+        clauses.append('"startTime" <= :end_time')
+        params["end_time"] = filters.end_time
+
+    where = ("WHERE " + " AND ".join(clauses)) if clauses else ""
     query = text(
         f"""
         SELECT
             COUNT(*) AS request_count,
-            SUM(CASE WHEN status_code >= 200 AND status_code < 400 THEN 1 ELSE 0 END) AS success_count,
-            SUM(CASE WHEN status_code >= 400 THEN 1 ELSE 0 END) AS error_count,
-            COALESCE(SUM(input_tokens), 0) AS total_input_tokens,
-            COALESCE(SUM(output_tokens), 0) AS total_output_tokens,
+            SUM(CASE WHEN status = 'success' THEN 1 ELSE 0 END) AS success_count,
+            SUM(CASE WHEN status != 'success' THEN 1 ELSE 0 END) AS error_count,
+            COALESCE(SUM(prompt_tokens), 0) AS total_input_tokens,
+            COALESCE(SUM(completion_tokens), 0) AS total_output_tokens,
             COALESCE(SUM(spend), 0) AS total_spend
-        FROM {TABLE_NAME}
-        WHERE (:tenant_id IS NULL OR api_key_alias = :tenant_id)
-          AND (:model IS NULL OR model = :model)
-          AND (:provider IS NULL OR custom_llm_provider = :provider)
-          AND (:start_time IS NULL OR startTime >= :start_time)
-          AND (:end_time IS NULL OR startTime <= :end_time)
+        FROM "{TABLE_NAME}"
+        {where}
         """
     )
-    params = {
-        "tenant_id": filters.tenant_id,
-        "model": filters.model,
-        "provider": filters.provider,
-        "start_time": filters.start_time,
-        "end_time": filters.end_time,
-    }
     row = (await db.execute(query, params)).mappings().one()
     return {
         "request_count": int(row["request_count"] or 0),

@@ -26,16 +26,16 @@ def client_with_usage_db() -> TestClient:
             await conn.execute(
                 text(
                     """
-                    CREATE TABLE litellm_spend_logs (
+                    CREATE TABLE "LiteLLM_SpendLogs" (
                       id INTEGER PRIMARY KEY AUTOINCREMENT,
-                      api_key_alias TEXT,
+                      api_key TEXT,
                       model TEXT,
                       custom_llm_provider TEXT,
-                      status_code INTEGER,
-                      input_tokens INTEGER,
-                      output_tokens INTEGER,
+                      status TEXT,
+                      prompt_tokens INTEGER,
+                      completion_tokens INTEGER,
                       spend REAL,
-                      startTime TEXT
+                      "startTime" TEXT
                     )
                     """
                 )
@@ -43,12 +43,12 @@ def client_with_usage_db() -> TestClient:
             await conn.execute(
                 text(
                     """
-                    INSERT INTO litellm_spend_logs
-                    (api_key_alias, model, custom_llm_provider, status_code, input_tokens, output_tokens, spend, startTime)
+                    INSERT INTO "LiteLLM_SpendLogs"
+                    (api_key, model, custom_llm_provider, status, prompt_tokens, completion_tokens, spend, "startTime")
                     VALUES
-                    ('tenant-a', 'router/default-fast', 'openai', 200, 10, 20, 0.12, '2026-03-06T00:00:00'),
-                    ('tenant-a', 'router/default-fast', 'openai', 500, 5, 0, 0.03, '2026-03-06T01:00:00'),
-                    ('tenant-b', 'router/default-balanced', 'anthropic', 200, 8, 16, 0.22, '2026-03-06T02:00:00')
+                    ('tenant-a', 'router/default-fast', 'openai', 'success', 10, 20, 0.12, '2026-03-06T00:00:00'),
+                    ('tenant-a', 'router/default-fast', 'openai', 'failure', 5, 0, 0.03, '2026-03-06T01:00:00'),
+                    ('tenant-b', 'router/default-balanced', 'anthropic', 'success', 8, 16, 0.22, '2026-03-06T02:00:00')
                     """
                 )
             )
@@ -105,4 +105,5 @@ def test_usage_summary_missing_table_returns_readable_error(
     resp = client_without_usage_table.get("/api/admin/usage/summary")
     assert resp.status_code == 404
     assert "does not exist" in resp.json()["error"]["message"]
-    assert "usage summary skipped: table litellm_spend_logs does not exist" in caplog.text
+    assert "usage summary skipped: table LiteLLM_SpendLogs does not exist" in caplog.text
+
