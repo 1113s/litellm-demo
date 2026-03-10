@@ -7,6 +7,7 @@ Create Date: 2026-03-06 00:01:00
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 revision = "20260306_0001"
@@ -15,7 +16,7 @@ branch_labels = None
 depends_on = None
 
 
-route_strategy = sa.Enum("fixed", "weighted", "fallback", name="route_strategy")
+route_strategy = postgresql.ENUM("fixed", "weighted", "fallback", name="route_strategy", create_type=False)
 
 
 def upgrade() -> None:

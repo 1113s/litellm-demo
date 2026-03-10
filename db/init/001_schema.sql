@@ -1,6 +1,0 @@
-CREATE TABLE IF NOT EXISTS tenants (
-  id UUID PRIMARY KEY,
-  name TEXT UNIQUE NOT NULL,
-  status TEXT NOT NULL DEFAULT 'active',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
