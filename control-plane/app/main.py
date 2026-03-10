@@ -17,15 +17,18 @@ logger = logging.getLogger(__name__)
 
 async def _seed_default_tenant() -> None:
     """Ensure a default tenant exists after Alembic migrations have run."""
-    async with SessionLocal() as session:
-        result = await session.execute(select(Tenant).where(Tenant.name == "default"))
-        if result.scalar_one_or_none() is None:
-            try:
-                session.add(Tenant(id="00000000-0000-0000-0000-000000000001", name="default", status="active"))
-                await session.commit()
-            except IntegrityError:
-                await session.rollback()
-                logger.info("default tenant already exists (concurrent insert)")
+    try:
+        async with SessionLocal() as session:
+            result = await session.execute(select(Tenant).where(Tenant.name == "default"))
+            if result.scalar_one_or_none() is None:
+                try:
+                    session.add(Tenant(id="00000000-0000-0000-0000-000000000001", name="default", status="active"))
+                    await session.commit()
+                except IntegrityError:
+                    await session.rollback()
+                    logger.info("default tenant already exists (concurrent insert)")
+    except Exception:
+        logger.warning("failed to seed default tenant (database may be unavailable)", exc_info=True)
 
 
 @asynccontextmanager
