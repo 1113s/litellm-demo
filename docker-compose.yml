@@ -86,6 +86,8 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       REDIS_URL: redis://redis:${REDIS_PORT:-6379}/0
     depends_on:
+      postgres:
+        condition: service_healthy
       litellm:
         condition: service_healthy
       redis:
